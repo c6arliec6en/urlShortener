@@ -58,7 +58,8 @@ app.post('/show', (req, res) => {
 app.get('/:shorturl', (req, res) => {
   Url.findOne({ shortUrl: req.params.shorturl }, (err, data) => {
     if (err) console.log(err)
-    return res.redirect(`${data.url}`)
+    console.log(data)
+    return res.redirect('/')
   })
 })
 
