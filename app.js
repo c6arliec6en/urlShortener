@@ -58,9 +58,9 @@ app.post('/show', (req, res) => {
 app.get('/:shorturl', (req, res) => {
   Url.findOne({ shortUrl: req.params.shorturl }, (err, data) => {
     if (err) console.log(err)
+    //heroku 模式下需要用判斷式，不然環境會直接抓到data.url為null產生錯誤
     if (data) {
-      console.log(data.url)
-      return res.redirect('/')
+      return res.redirect(`${data.url}`)
     }
 
   })
