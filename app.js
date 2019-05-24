@@ -59,7 +59,7 @@ app.get('/:shorturl', (req, res) => {
   Url.findOne({ shortUrl: req.params.shorturl }, (err, data) => {
     if (err) console.log(err)
     if (data) {
-      console.log(data)
+      console.log(data.url)
       return res.redirect('/')
     }
 
