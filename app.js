@@ -3,8 +3,13 @@ const app = express()
 const port = 3000
 const bcrypt = require('bcryptjs')
 const mongoose = require('mongoose')
+const exphbs = require('express-handlebars')
+const bodyParser = require('body-parser')
 
-mongoose.connect('mongodb://localhost/url', { useNewUrlParser: true })
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/url', {
+  useNewUrlParser: true,
+  useCreateIndex: true,
+})
 
 const db = mongoose.connection
 db.on('error', () => {
@@ -14,18 +19,49 @@ db.once('open', () => {
   console.log('mongodb connect')
 })
 
-// 資料庫鍵入一個是原始網址一個是產生的亂碼
-// 亂碼需要去看是否已經有現有網址使用了
-// schema需要鍵入originUrl和亂碼
-// 使用pramas去還原網址
+const Url = require('./models/url')
 
-// app.get('/:shorturl', (req, res) => {
-//   Url.findOne({ shorturl: req.params.shorturl }, (err, url) => {
-
-//   })
-// })
+app.set('view engine', 'handlebars')
+app.engine('handlebars', exphbs({ defaultLayout: 'main' }))
+app.use(bodyParser.urlencoded({ extended: true }))
 
 
-app.listen(port, () => {
+app.get('/', (req, res) => {
+  res.render('index')
+})
+
+app.post('/show', (req, res) => {
+  const originUrl = req.body.url
+
+  if (originUrl === '') {
+    res.render('index', { message: '請輸入想要變短的網址' })
+  }
+
+  let shortUrl = Math.random().toString(36).slice(-5)
+
+  Url.find({ shortUrl: shortUrl }, (err, data) => {
+    if (data.length > 0) {
+      while (data[0].shortUrl === shortUrl) {
+        shortUrl = Math.random().toString(36).slice(-5)
+      }
+    }
+  })
+  const newUrl = new Url({
+    url: originUrl,
+    shortUrl,
+  })
+  newUrl.save().then(url => {
+    res.render('show', { shortUrl: shortUrl })
+  })
+})
+
+app.get('/:shorturl', (req, res) => {
+  Url.findOne({ shortUrl: req.params.shorturl }, (err, data) => {
+    if (err) console.log(err)
+    return res.redirect(`${data.url}`)
+  })
+})
+
+app.listen(process.env.PORT || port, () => {
   console.log('Express starting')
 })
